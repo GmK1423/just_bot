@@ -2,7 +2,7 @@ package org.example.Game.Persons;
 
 import org.example.Game.Ranks.Ranks;
 
-public class StartPerson {
+public class StartPerson extends Ranks{
     private int id;
     private String userName;
 
@@ -10,15 +10,16 @@ public class StartPerson {
         userName = getName();
     }
 
-    private int score;
+    private static int score;
 
-    {
+    static {
         score = getScore();
     }
 
     protected int point = 0;
 
     public StartPerson(int id) {
+        super(score);
         this.id = id;
     }
 
@@ -26,7 +27,7 @@ public class StartPerson {
         return "NotImplement";
     }
 
-    private int getScore() {
+    private static int getScore() {
         return -1;
     }
 

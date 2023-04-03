@@ -2,7 +2,7 @@ package org.example.Game.Persons;
 
 public class AdminPerson extends StartPerson {
 
-    public AdminPerson(int id, String userName, int score) {
+    public AdminPerson(int id) {
         super(id);
     }
 
