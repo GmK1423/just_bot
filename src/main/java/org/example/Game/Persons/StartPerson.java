@@ -2,28 +2,31 @@ package org.example.Game.Persons;
 
 import org.example.Game.Ranks.Ranks;
 
-public class StartPerson extends Ranks {
+public class StartPerson {
     private int id;
-    private static String userName;
-    static{
-        userName = StartPerson.getName();
+    private String userName;
+
+    {
+        userName = getName();
     }
-    private static int score;
-    static{
-        score = StartPerson.getScore();
+
+    private int score;
+
+    {
+        score = getScore();
     }
-    protected int point;
+
+    protected int point = 0;
 
     public StartPerson(int id) {
-        super(score);
         this.id = id;
     }
 
-    public static String getName() {
+    private String getName() {
         return "NotImplement";
     }
 
-    public static int getScore() {
+    private int getScore() {
         return -1;
     }
 
