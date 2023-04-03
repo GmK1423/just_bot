@@ -4,22 +4,34 @@ import org.example.Game.Ranks.Ranks;
 
 public class StartPerson extends Ranks {
     private int id;
-    private String userName;
-    private int score;
+    private static String userName;
+    static{
+        userName = StartPerson.getName();
+    }
+    private static int score;
+    static{
+        score = StartPerson.getScore();
+    }
     protected int point;
 
-    public StartPerson(int id, String userName, int score) {
+    public StartPerson(int id) {
         super(score);
         this.id = id;
-        this.userName = userName;
-        this.score = score;
+    }
+
+    public static String getName() {
+        return "NotImplement";
+    }
+
+    public static int getScore() {
+        return -1;
     }
 
     public String getInfo() {
         return "ID- " + id + " Name- " + userName + " number of points" + score;
     }
 
-    public void getPoints(){
+    public void getPoints() {
         score += point;
     }
 
