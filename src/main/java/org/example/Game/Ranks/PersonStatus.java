@@ -13,7 +13,8 @@ public enum PersonStatus {
     PersonStatus(String str) {
         this.str = str;
     }
-    public String getValue(){
+    @Override
+    public String toString(){
         return str;
     }
 }

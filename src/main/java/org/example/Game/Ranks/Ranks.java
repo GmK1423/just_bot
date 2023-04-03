@@ -16,17 +16,17 @@ public class Ranks {
     private String setPersonStatus() {
         if ((gamePoints >= 0) && (gamePoints <= 1000)) {
             if (gamePoints < 150) {
-                return PersonStatus.PEASANT.getValue();
+                return PersonStatus.PEASANT.toString();
             } else if (gamePoints < 350) {
-                return PersonStatus.KNIGHT.getValue();
+                return PersonStatus.KNIGHT.toString();
             } else if (gamePoints < 500) {
-                return PersonStatus.BARON.getValue();
+                return PersonStatus.BARON.toString();
             } else if (gamePoints < 750) {
-                return PersonStatus.HERCEG.getValue();
+                return PersonStatus.HERCEG.toString();
             } else if (gamePoints < 950) {
-                return PersonStatus.KING.getValue();
+                return PersonStatus.KING.toString();
             } else {
-                return PersonStatus.GOD.getValue();
+                return PersonStatus.GOD.toString();
             }
         } else {
             return "ErrorStatus";
@@ -36,7 +36,7 @@ public class Ranks {
     public String getLevelBonus(){
         switch (personStatus){
             case "Peasent":
-                return "";
+                return "What are the bonuses? Go to work";
             case "Knight":
                 return "";
             case "Herceg":
