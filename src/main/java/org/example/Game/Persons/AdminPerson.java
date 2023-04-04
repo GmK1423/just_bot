@@ -1,9 +1,10 @@
 package org.example.Game.Persons;
 
-public class AdminPerson extends StartPerson {
+public class AdminPerson {
+    private StartPerson admin;
 
-    public AdminPerson(int id) {
-        super(id);
+    public AdminPerson(StartPerson adminPerson) {
+        this.admin = adminPerson;
     }
 
     public int givePoint(StartPerson person, int point) {
