@@ -1,6 +1,6 @@
-package org.example.Game.Ranks;
+package org.example.game.Ranks;
 
-import org.example.Game.Persons.StartPerson;
+import org.example.game.Persons.StartPerson;
 
 public class Ranks {
     private int progress;

@@ -1,4 +1,4 @@
-package org.example.Game.Ranks;
+package org.example.game.Ranks;
 
 public enum PersonStatus {
     PEASANT("Peasant"),
