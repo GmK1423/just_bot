@@ -1,4 +1,4 @@
-package org.example.bot;
+package org.example.bot.config.bot;
 
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.Update;

@@ -1,8 +1,7 @@
-package org.example.game.Persons;
+package org.example.bot.game.Persons;
 
 import org.springframework.stereotype.Component;
 
-@Component
 
 public class StartPerson{
     private int id;

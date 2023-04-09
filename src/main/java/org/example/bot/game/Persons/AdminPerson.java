@@ -1,14 +1,8 @@
-package org.example.game.Persons;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-@Component
+package org.example.bot.game.Persons;
 
 public class AdminPerson {
     private StartPerson admin;
 
-    @Autowired
     public AdminPerson(StartPerson adminPerson) {
         this.admin = adminPerson;
     }
