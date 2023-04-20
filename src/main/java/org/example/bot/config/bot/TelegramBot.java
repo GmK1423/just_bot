@@ -1,9 +1,13 @@
 package org.example.bot.config.bot;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.bot.config.BotConfig;
 import org.example.bot.controllers.ProfileController;
 import org.example.bot.database.models.Person;
 import org.example.bot.database.repository.PersonRepository;
+import org.example.bot.game.Game;
+import org.example.bot.game.Ranks.Ranks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -20,18 +24,20 @@ import java.util.List;
 @Configuration
 public class TelegramBot extends TelegramLongPollingBot {
     private final BotConfig config;
-    @Autowired
     private final PersonRepository personRepository;
+    //    private final Ranks rang;
     private Update update;
     private Long chatId;
     private static final String HELP_TEXT = "Welcome to our game chat bot, created to maintain a cooperative spirit and organize a routine workflow.\n\n" +
             "You can execute from the main menu on the left or by typing a command:\n\n" +
             "Type /start to see a main menu but if you are not registered, the bot will offer to register\n\n";
 
+
     @Autowired
     public TelegramBot(BotConfig config, PersonRepository personRepository) {
         this.config = config;
         this.personRepository = personRepository;
+//        this.rang = rang;
 
         List<BotCommand> listOfCommand = new ArrayList<>();
         listOfCommand.add(new BotCommand("/start", "Start"));
@@ -58,19 +64,32 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
+        update.getMessage().getChat().isGroupChat();
         this.update = update;
         this.chatId = update.getMessage().getChatId();
-        if (update.hasMessage() && update.getMessage().hasText()) {
-            String messageText = update.getMessage().getText();
-            switch (messageText) {
-                case "/start":
-                    startCommandReceive();
-                    break;
-                case "/help":
-                    sendMessage(HELP_TEXT);
-                    break;
-                default:
-                    sendMessage("Enter command");
+        if (update.getMessage().getChat().isUserChat()) {
+            if (update.hasMessage() && update.getMessage().hasText()) {
+                String messageText = update.getMessage().getText();
+                switch (messageText) {
+                    case "/start":
+                        startCommandReceive();
+                        break;
+                    case "/help":
+                        sendMessage(HELP_TEXT);
+                        break;
+                    case "/profile":
+                        getProfile();
+                        break;
+                    case "/users":
+                        sendMessage(getUsers());
+                        break;
+
+                    default:
+                        sendMessage("Enter any command");
+
+
+                }
+            } else {
 
             }
         }
@@ -89,17 +108,39 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void startCommandReceive() {
         userVerification();
         mainMenu();
-        if (update.hasMessage() && update.getMessage().hasText()) {
-            String messageText = update.getMessage().getText();
-            switch (messageText) {
-                case "/profile":
-                    sendMessage("Your profile: \n\n" +
-                            "1. Name is " + getPersonData().getNickname() + "\n\n" +
-                            "2. Number of points is " + getPersonData().getNumberOfPoints() + "\n\n" +
-                            "3. Your rang is " + getPersonData().getRang() + "\n\n");
-            }
-        }
+//        if (update.hasMessage() && update.getMessage().hasText()) {
+//            String messageText = update.getMessage().getText();
+//            switch (messageText){
+//                case "/profile":
+//                    sendMessage("Your profile: \n\n" +
+//                            "1. Name is " + getPersonData().getNickname() + "\n\n" +
+//                            "2. Number of points is " + getPersonData().getNumberOfPoints() + "\n\n" +
+//                            "3. Your rang is " + getPersonData().getRang() + "\n\n");
+//                    break;
+//                default:
+//                    sendMessage("Error");
+//            }
+//
+//        }
 
+    }
+
+    private void getProfile() {
+        sendMessage("Your profile: \n\n" +
+                "1. Name is " + getPersonData().getNickname() + "\n\n" +
+                "2. Number of points is " + getPersonData().getNumberOfPoints() + "\n\n" +
+                "3. Your rang is " + getPersonData().getRang() + "\n\n");
+    }
+
+    private String getUsers() {
+        List<Person> persons;
+        ProfileController profileController = new ProfileController(personRepository);
+        persons = profileController.getUsers();
+        String users = "";
+        for (Person person : persons) {
+            users += (person.getNickname() + "\n");
+        }
+        return users;
     }
 
     private void sendMessage(String textToSend) {

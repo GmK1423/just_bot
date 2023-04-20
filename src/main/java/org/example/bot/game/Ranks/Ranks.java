@@ -1,15 +1,19 @@
 package org.example.bot.game.Ranks;
 
+import org.example.bot.database.models.Person;
 import org.example.bot.game.Persons.StartPerson;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 public class Ranks {
     private int progress;
     private String personStatus;
     private String levelBonus;
 
-    public Ranks(StartPerson person) {
 
-        this.progress = person.getProgress();
+    public Ranks() {
+
+//        this.progress = person.getNumberOfPoints();
         this.personStatus = getPersonStatus();
         this.levelBonus = getLevelBonus();
 //        System.out.println(personStatus);
@@ -36,8 +40,8 @@ public class Ranks {
         }
     }
 
-    public String getLevelBonus(){
-        switch (personStatus){
+    public String getLevelBonus() {
+        switch (personStatus) {
             case "Peasent":
                 return "What are the bonuses? Go to work";
             case "Knight":
@@ -52,8 +56,6 @@ public class Ranks {
                 return "Who are you, soldier?";
         }
     }
-
-
 
 
 }
