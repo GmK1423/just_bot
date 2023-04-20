@@ -2,6 +2,7 @@ package org.example.bot.config.bot;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.log4j.Log4j;
 import org.example.bot.config.BotConfig;
 import org.example.bot.controllers.ProfileController;
 import org.example.bot.database.models.Person;
@@ -18,11 +19,15 @@ import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.commands.scope.BotCommandScopeDefault;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
+@Log4j
 public class TelegramBot extends TelegramLongPollingBot {
+
+    private CommandFilter commandFilter;
     private final BotConfig config;
     private final PersonRepository personRepository;
     //    private final Ranks rang;
@@ -32,11 +37,12 @@ public class TelegramBot extends TelegramLongPollingBot {
             "You can execute from the main menu on the left or by typing a command:\n\n" +
             "Type /start to see a main menu but if you are not registered, the bot will offer to register\n\n";
 
-
     @Autowired
-    public TelegramBot(BotConfig config, PersonRepository personRepository) {
+    public TelegramBot(BotConfig config, PersonRepository personRepository, CommandFilter commandFilter) {
         this.config = config;
         this.personRepository = personRepository;
+        this.commandFilter = commandFilter;
+
 //        this.rang = rang;
 
         List<BotCommand> listOfCommand = new ArrayList<>();
@@ -64,146 +70,22 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        update.getMessage().getChat().isGroupChat();
-        this.update = update;
-        this.chatId = update.getMessage().getChatId();
-        if (update.getMessage().getChat().isUserChat()) {
-            if (update.hasMessage() && update.getMessage().hasText()) {
-                String messageText = update.getMessage().getText();
-                switch (messageText) {
-                    case "/start":
-                        startCommandReceive();
-                        break;
-                    case "/help":
-                        sendMessage(HELP_TEXT);
-                        break;
-                    case "/profile":
-                        getProfile();
-                        break;
-                    case "/users":
-                        sendMessage(getUsers());
-                        break;
+        commandFilter.processUpdate(update);
+    }
 
-                    default:
-                        sendMessage("Enter any command");
+    @PostConstruct
+    public void init() {
+        commandFilter.registerBot(this);
+    }
 
-
-                }
-            } else {
-
+    public void sendAnswerMessage(SendMessage message) {
+        if (message != null) {
+            try {
+                execute(message);
+            } catch (TelegramApiException e) {
+                log.error(e);
             }
         }
     }
 
-//    private String filter() {
-//        String message;
-//        if (update.hasMessage() && update.getMessage().hasText()) {
-//            message = update.getMessage().getText();
-//
-//            return message;
-//        }
-//        return null;
-//    }
-
-    private void startCommandReceive() {
-        userVerification();
-        mainMenu();
-//        if (update.hasMessage() && update.getMessage().hasText()) {
-//            String messageText = update.getMessage().getText();
-//            switch (messageText){
-//                case "/profile":
-//                    sendMessage("Your profile: \n\n" +
-//                            "1. Name is " + getPersonData().getNickname() + "\n\n" +
-//                            "2. Number of points is " + getPersonData().getNumberOfPoints() + "\n\n" +
-//                            "3. Your rang is " + getPersonData().getRang() + "\n\n");
-//                    break;
-//                default:
-//                    sendMessage("Error");
-//            }
-//
-//        }
-
-    }
-
-    private void getProfile() {
-        sendMessage("Your profile: \n\n" +
-                "1. Name is " + getPersonData().getNickname() + "\n\n" +
-                "2. Number of points is " + getPersonData().getNumberOfPoints() + "\n\n" +
-                "3. Your rang is " + getPersonData().getRang() + "\n\n");
-    }
-
-    private String getUsers() {
-        List<Person> persons;
-        ProfileController profileController = new ProfileController(personRepository);
-        persons = profileController.getUsers();
-        String users = "";
-        for (Person person : persons) {
-            users += (person.getNickname() + "\n");
-        }
-        return users;
-    }
-
-    private void sendMessage(String textToSend) {
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setText(textToSend);
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void userVerification() {
-        Person person = new Person();
-        if (personRepository.findById(chatId).isEmpty()) {
-            createPerson(person);
-            sendMessage("User has been registered\n\n");
-//            person = getPersonData();
-//            sendMessage("Your profile: \n\n" +
-//                    "1. Name is " + person.getNickname() + "\n\n" +
-//                    "2. Number of points is " + person.getNumberOfPoints() + "\n\n" +
-//                    "3. Your rang is " + person.getRang() + "\n\n");
-        }
-//        else {
-//            person = getPersonData();
-//            sendMessage("Your profile: \n\n" +
-//                    "1. Name is " + person.getNickname() + "\n\n" +
-//                    "2. Number of points is " + person.getNumberOfPoints() + "\n\n" +
-//                    "3. Your rang is " + person.getRang() + "\n\n");
-//        }
-    }
-
-    private void mainMenu() {
-        sendMessage("Your profile: \n\n" +
-                "1. Profile (/profile)\n" +
-                "2. Users info (/users)\n");
-    }
-
-    private Person getPersonData() {
-        Person person = new Person();
-        ProfileController profileController = new ProfileController(personRepository);
-        person = profileController.getUserById(chatId);
-        return person;
-    }
-
-    private void createPerson(Person person) {
-        person.setId(chatId);
-        person.setNickname(update.getMessage().getChat().getFirstName());
-        person.setNumberOfPoints(0);
-        person.setRang("Peasant");
-        personRepository.save(person);
-    }
-
-//    public void sendText(Long who, String what) {
-//        SendMessage sm = SendMessage.builder()
-//                .chatId(who.toString()) //Who are we sending a message to
-//                .text(what).build();    //Message content
-//        try {
-//            execute(sm);                        //Actually sending the message
-//        } catch (TelegramApiException e) {
-//            throw new RuntimeException(e);      //Any error will be printed here
-//        }
-//
-//    }
 }
