@@ -6,10 +6,8 @@ import org.example.bot.controllers.ProfileController;
 import org.example.bot.database.models.Person;
 import org.example.bot.database.repository.PersonRepository;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,11 +83,54 @@ public class CommandFilter {
     }
 
     private void processTextMessage(Update update) {
-        commands(update);
+        commandsPrivate(update);
         log.debug(update.getMessage());
+        if (update.getMessage().getChat().isUserChat()) {
+            commandsPrivate(update);
+        }
+        if (update.getMessage().getChat().isGroupChat()) {
+            commandsGroup(update);
+        } else {
+            log.error("Unsupported message type is received: " + update);
+        }
     }
 
-    private void commands(Update update) {
+    private void commandsGroup(Update update) {
+        String[] messageText = updateToArray(update.getMessage().getText());
+        switch (messageText[0]) {
+            case "/start":
+                startCommandReceive();
+                break;
+            case "/events_executed":
+                if (messageText[0] != messageText[1] && messageText[0] != messageText[2]) {
+                    executed(messageText, update);
+                }
+                if (messageText[0] == messageText[1] && messageText[0] == messageText[2]) {
+                    executedinformation(update);
+                }
+                break;
+
+            default:
+                setView(messageUtils.generateSendMessageWithText(update, "Enter any command"));
+
+        }
+    }
+
+    private void executedinformation(Update update) {
+        var sendMessage = messageUtils.generateSendMessageWithText(update,
+                "If you want to report an event, first type the command /events_executed, then a : the event description");
+        setView(sendMessage);
+    }
+
+    private void executed(String[] messageText, Update update) {
+        var sendMessage = messageUtils.generateSendMessageWithText(update,
+                String.format("Who: %s \nMessage: %s \nId person: %s", update.getMessage().getFrom().getFirstName(), messageText[2], update.getMessage().getFrom().getId()));
+        sendMessage.setChatId(BotConfig.moderid);
+        setView(sendMessage);
+
+    }
+
+    private void commandsPrivate(Update update) {
         this.update = update;
         this.chatId = update.getMessage().getChatId();
 
@@ -119,8 +160,16 @@ public class CommandFilter {
                     if (messageText[0] != messageText[1] && messageText[0] != messageText[2]) {
                         createEvent(messageText);
                     }
-                    if (messageText[0] == messageText[2]) {
-                        setView(messageUtils.generateSendMessageWithText(update, "Wrong information try again"));
+                    if (messageText[0] == messageText[1] && messageText[0] == messageText[2]) {
+                        infirmationIvent(update);
+                    }
+                    break;
+                case "/addcoin":
+                    if (messageText[0] != messageText[1] && messageText[0] != messageText[2]) {
+                        addCoin(messageText);
+                    }
+                    if (messageText[0] == messageText[1] && messageText[0] == messageText[2]) {
+                        addCoinInformation(update);
                     }
                     break;
                 case "/give_admin_status":
@@ -134,13 +183,35 @@ public class CommandFilter {
         }
     }
 
+    private void addCoin(String[] messageText) {
+        Person person = new Person();
+        ProfileController profileController = new ProfileController(personRepository);
+        person = profileController.getUserById(Long.parseLong(messageText[1]));
+        Integer point = person.getNumberOfPoints();
+        point += Integer.parseInt(messageText[2]);
+        person.setNumberOfPoints(point);
+        personRepository.save(person);
+    }
+
+    private void addCoinInformation(Update update) {
+        var sendMessage = messageUtils.generateSendMessageWithText(update,
+                "If you want add coin user, first type the command /addcoin, then a : idperson, then : coin");
+        setView(sendMessage);
+    }
+
+    private void infirmationIvent(Update update) {
+        var sendMessage = messageUtils.generateSendMessageWithText(update,
+                "If you want to start an event, first type the command /events, then a :, the event description, and after the : how many coenes will get for completing the event");
+        setView(sendMessage);
+    }
+
     private void createEvent(String[] messageText) {
         List<Person> persons;
         ProfileController profileController = new ProfileController(personRepository);
         persons = profileController.getUsers();
         List<String> chatsid = new ArrayList<>();
         for (Person person : persons) {
-            if (Integer.parseInt(String.valueOf(person.getId())) < 0) {
+            if (person.getId() < 0) {
                 chatsid.add(String.valueOf(person.getId()));
             }
         }
@@ -156,6 +227,9 @@ public class CommandFilter {
     private static String[] updateToArray(String text) {
         String substring = ":";
         String[] str = text.split(substring);
+        for (int i = 0; i < str.length; i++) {
+            str[i] = str[i].trim();
+        }
         String[] str2 = new String[3];
         if (text.contains(substring) && str.length != 1 && str.length <= 3) {
             if (str.length == 3) {
