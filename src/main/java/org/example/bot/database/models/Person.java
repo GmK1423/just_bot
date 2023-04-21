@@ -7,6 +7,7 @@ import javax.persistence.Id;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
+
 @Entity
 public class Person {
     @Id
@@ -15,6 +16,8 @@ public class Person {
     //private String race;
     private int numberOfPoints;
     private String rang;
+
+    private boolean admin;
 
     public void setId(long id) {
         this.id = id;
@@ -26,6 +29,14 @@ public class Person {
 
     public void setRang(String rang) {
         this.rang = rang;
+    }
+
+    public boolean isAdmin() {
+        return admin;
+    }
+
+    public void setAdmin(boolean admin) {
+        this.admin = admin;
     }
 
     public Person() {

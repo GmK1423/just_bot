@@ -1,6 +1,7 @@
 package org.example.bot.config.bot;
 
 import lombok.extern.log4j.Log4j;
+import org.example.bot.config.BotConfig;
 import org.example.bot.controllers.ProfileController;
 import org.example.bot.database.models.Person;
 import org.example.bot.database.repository.PersonRepository;
@@ -92,7 +93,7 @@ public class CommandFilter {
         this.update = update;
         this.chatId = update.getMessage().getChatId();
 
-        String[] messageText =updateToArray(update.getMessage().getText());
+        String[] messageText = updateToArray(update.getMessage().getText());
         switch (messageText[0]) {
             case "/start":
                 startCommandReceive();
@@ -106,17 +107,30 @@ public class CommandFilter {
             case "/users":
                 setView(messageUtils.generateSendMessageWithText(update, getUsers()));
                 break;
-            case "/events":
-                if(messageText[0]!=messageText[1] &&messageText[0]!=messageText[2]) {
-                    createEvent(messageText);
-                }if(messageText[0]==messageText[2]){
-                    setView(messageUtils.generateSendMessageWithText(update, "Wrong information try again"));
-                }
-                break;
 
             default:
                 setView(messageUtils.generateSendMessageWithText(update, "Enter any command"));
 
+        }
+
+        if (getPersonData().isAdmin()) {
+            switch (messageText[0]) {
+                case "/events":
+                    if (messageText[0] != messageText[1] && messageText[0] != messageText[2]) {
+                        createEvent(messageText);
+                    }
+                    if (messageText[0] == messageText[2]) {
+                        setView(messageUtils.generateSendMessageWithText(update, "Wrong information try again"));
+                    }
+                    break;
+                case "/give_admin_status":
+                    if (getPersonData().getId() == BotConfig.moderid) {
+                        giveAdminState(messageText);
+                        setView(messageUtils.generateSendMessageWithText(update, "Admin status given to user " + update.getMessage().getChat().getFirstName()));
+
+                    }
+                    break;
+            }
         }
     }
 
@@ -124,61 +138,58 @@ public class CommandFilter {
         List<Person> persons;
         ProfileController profileController = new ProfileController(personRepository);
         persons = profileController.getUsers();
-        ArrayList<String> chatsid = new ArrayList<>();
+        List<String> chatsid = new ArrayList<>();
         for (Person person : persons) {
-            if(Integer.parseInt (String.valueOf(person.getId()))<0) {
+            if (Integer.parseInt(String.valueOf(person.getId())) < 0) {
                 chatsid.add(String.valueOf(person.getId()));
             }
         }
-
         var sendMessage = messageUtils.generateSendMessageWithText(update,
-                String.format("Ivent: \nDescription: %s \nCoin: %s", messageText[1],messageText[2]));
-        for(String chatid : chatsid){
+                String.format("Ivent: \nDescription: %s \nCoin: %s", messageText[1], messageText[2]));
+        for (String chatid : chatsid) {
             sendMessage.setChatId(chatid);
             setView(sendMessage);
         }
 
     }
 
-    public static String[] updateToArray(String text){
-        String substring = " ";
-        String[] str= text.split(" ");;
+    private static String[] updateToArray(String text) {
+        String substring = ":";
+        String[] str = text.split(substring);
         String[] str2 = new String[3];
-        if(text.contains(substring) && str.length!=1 && str.length<=3){
-            if(str.length==3){
+        if (text.contains(substring) && str.length != 1 && str.length <= 3) {
+            if (str.length == 3) {
                 return str;
-            }else{
+            } else {
                 for (int i = 0; i < str.length; i++) {
-                    str2[i]=str[i];
+                    str2[i] = str[i];
                 }
-                str2[2]=str[1];
+                str2[2] = str[1];
                 return str2;
             }
-        }else{
+        } else {
             for (int i = 0; i < str2.length; i++) {
-                str2[i]=str[0];
+                str2[i] = str[0];
             }
             return str2;
+        }
+    }
+
+    private void giveAdminState(String[] messageText) {
+        long id;
+        if (!messageText[1].isEmpty()) {
+            id = Long.parseLong(messageText[1]);
+
+            ProfileController profileController = new ProfileController(personRepository);
+            if (personRepository.findById(chatId).isPresent()) {
+                profileController.giveAdminStatus(id);
+            }
         }
     }
 
     private void startCommandReceive() {
         userVerification();
         mainMenu();
-//        if (update.hasMessage() && update.getMessage().hasText()) {
-//            String messageText = update.getMessage().getText();
-//            switch (messageText){
-//                case "/profile":
-//                    sendMessage("Your profile: \n\n" +
-//                            "1. Name is " + getPersonData().getNickname() + "\n\n" +
-//                            "2. Number of points is " + getPersonData().getNumberOfPoints() + "\n\n" +
-//                            "3. Your rang is " + getPersonData().getRang() + "\n\n");
-//                    break;
-//                default:
-//                    sendMessage("Error");
-//            }
-//
-//        }
 
     }
 
@@ -200,16 +211,6 @@ public class CommandFilter {
         return users;
     }
 
-//    private void sendMessage(String textToSend) {
-//        SendMessage message = new SendMessage();
-//        message.setChatId(chatId);
-//        message.setText(textToSend);
-//        try {
-//            execute(message);
-//        } catch (TelegramApiException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
     private void userVerification() {
         Person person = new Person();

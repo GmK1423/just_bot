@@ -58,4 +58,10 @@ public class ProfileController {
         person.setNickname(name);
         personRepository.save(person);
     }
+
+    public void giveAdminStatus(@PathVariable Long id){
+        Person person = personRepository.findById(id).orElseThrow();
+        person.setAdmin(true);
+        personRepository.save(person);
+    }
 }

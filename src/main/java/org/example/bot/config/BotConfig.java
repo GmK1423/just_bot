@@ -12,6 +12,8 @@ public class BotConfig {
     @Value("${bot.key}")
     String token;
 
+    public static final long moderid = 619465925;
+
     public String getBotName() {
         return botName;
     }
@@ -20,4 +22,7 @@ public class BotConfig {
         return token;
     }
 
+    public long getModerid() {
+        return moderid;
+    }
 }
