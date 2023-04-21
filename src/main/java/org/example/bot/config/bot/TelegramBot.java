@@ -50,6 +50,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         listOfCommand.add(new BotCommand("/help", "Info about bot"));
         listOfCommand.add(new BotCommand("/profile", "Get profile info"));
         listOfCommand.add(new BotCommand("/users", "Get users info"));
+        listOfCommand.add(new BotCommand("/events", "Start ivent"));
         try {
             execute(new SetMyCommands(listOfCommand, new BotCommandScopeDefault(), null));
         } catch (TelegramApiException e) {

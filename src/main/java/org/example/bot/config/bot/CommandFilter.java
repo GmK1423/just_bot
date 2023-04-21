@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Log4j
@@ -40,7 +41,7 @@ public class CommandFilter {
             return;
         }
 
-        if (update.getMessage().getChat().isUserChat() && update.hasMessage()) {
+        if (update.hasMessage()) {
             distributeMessagesByType(update);
         } else {
             log.error("Unsupported message type is received: " + update);
@@ -88,34 +89,76 @@ public class CommandFilter {
     }
 
     private void commands(Update update) {
-        update.getMessage().getChat().isGroupChat();
         this.update = update;
         this.chatId = update.getMessage().getChatId();
-        if (update.getMessage().getChat().isUserChat()) {
-            if (update.hasMessage() && update.getMessage().hasText()) {
-                String messageText = update.getMessage().getText();
-                switch (messageText) {
-                    case "/start":
-                        startCommandReceive();
-                        break;
-                    case "/help":
-                        setView(messageUtils.generateSendMessageWithText(update, HELP_TEXT));
-                        break;
-                    case "/profile":
-                        getProfile();
-                        break;
-                    case "/users":
-                        setView(messageUtils.generateSendMessageWithText(update, getUsers()));
-                        break;
 
-                    default:
-                        setView(messageUtils.generateSendMessageWithText(update, "Enter any command"));
-
-
+        String[] messageText =updateToArray(update.getMessage().getText());
+        switch (messageText[0]) {
+            case "/start":
+                startCommandReceive();
+                break;
+            case "/help":
+                setView(messageUtils.generateSendMessageWithText(update, HELP_TEXT));
+                break;
+            case "/profile":
+                getProfile();
+                break;
+            case "/users":
+                setView(messageUtils.generateSendMessageWithText(update, getUsers()));
+                break;
+            case "/events":
+                if(messageText[0]!=messageText[1] &&messageText[0]!=messageText[2]) {
+                    createEvent(messageText);
+                }if(messageText[0]==messageText[2]){
+                    setView(messageUtils.generateSendMessageWithText(update, "Wrong information try again"));
                 }
-            } else {
+                break;
 
+            default:
+                setView(messageUtils.generateSendMessageWithText(update, "Enter any command"));
+
+        }
+    }
+
+    private void createEvent(String[] messageText) {
+        List<Person> persons;
+        ProfileController profileController = new ProfileController(personRepository);
+        persons = profileController.getUsers();
+        ArrayList<String> chatsid = new ArrayList<>();
+        for (Person person : persons) {
+            if(Integer.parseInt (String.valueOf(person.getId()))<0) {
+                chatsid.add(String.valueOf(person.getId()));
             }
+        }
+
+        var sendMessage = messageUtils.generateSendMessageWithText(update,
+                String.format("Ivent: \nDescription: %s \nCoin: %s", messageText[1],messageText[2]));
+        for(String chatid : chatsid){
+            sendMessage.setChatId(chatid);
+            setView(sendMessage);
+        }
+
+    }
+
+    public static String[] updateToArray(String text){
+        String substring = " ";
+        String[] str= text.split(" ");;
+        String[] str2 = new String[3];
+        if(text.contains(substring) && str.length!=1 && str.length<=3){
+            if(str.length==3){
+                return str;
+            }else{
+                for (int i = 0; i < str.length; i++) {
+                    str2[i]=str[i];
+                }
+                str2[2]=str[1];
+                return str2;
+            }
+        }else{
+            for (int i = 0; i < str2.length; i++) {
+                str2[i]=str[0];
+            }
+            return str2;
         }
     }
 
