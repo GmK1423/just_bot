@@ -5,6 +5,7 @@ import org.example.bot.config.BotConfig;
 import org.example.bot.controllers.ProfileController;
 import org.example.bot.database.models.Person;
 import org.example.bot.database.repository.PersonRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -20,6 +21,7 @@ public class CommandFilter {
     private Update update;
     private Long chatId;
     private final PersonRepository personRepository;
+    private final ProfileController profileController;
 
     private static final String HELP_TEXT = """
             Welcome to our game chat bot, created to maintain a cooperative spirit and organize a routine workflow.
@@ -30,9 +32,10 @@ public class CommandFilter {
 
             """;
 
-    public CommandFilter(MessageUtils messageUtils, PersonRepository personRepository) {
+    public CommandFilter(MessageUtils messageUtils, PersonRepository personRepository,ProfileController profileController) {
         this.messageUtils = messageUtils;
         this.personRepository = personRepository;
+        this.profileController = profileController;
     }
 
     public void registerBot(TelegramBot telegramBot) {
@@ -67,7 +70,7 @@ public class CommandFilter {
 
     private void setUnsupportedMessageTypeView(Update update) {
         var sendMessage = messageUtils.generateSendMessageWithText(update,
-                "Неподдерживаемый тип сообщения!");
+                "Unsupported message type!");
         setView(sendMessage);
     }
 
@@ -77,13 +80,13 @@ public class CommandFilter {
 
     private void processPhotoMessage(Update update) {
         var sendMessage = messageUtils.generateSendMessageWithText(update,
-                "Неподдерживаемый тип сообщения!");
+                "Unsupported message type!");
         setView(sendMessage);
     }
 
     private void processDocMessage(Update update) {
         var sendMessage = messageUtils.generateSendMessageWithText(update,
-                "Неподдерживаемый тип сообщения!");
+                "Unsupported message type!");
         setView(sendMessage);
     }
 
@@ -109,14 +112,14 @@ public class CommandFilter {
                     executed(messageText, update);
                 }
                 if (messageText[0].equals(messageText[1]) && messageText[0].equals(messageText[2])) {
-                    executedinformation(update);
+                    executedInformation(update);
                 }
             }
             default -> setView(messageUtils.generateSendMessageWithText(update, "Enter any command"));
         }
     }
 
-    private void executedinformation(Update update) {
+    private void executedInformation(Update update) {
         var sendMessage = messageUtils.generateSendMessageWithText(update,
                 "If you want to report an event, first type the command /events_executed, then a : the event description");
         setView(sendMessage);
@@ -176,7 +179,7 @@ public class CommandFilter {
                     break;
                 case "/give_admin_status":
                     if (getPersonData().getId() == BotConfig.moderid) {
-                        giveAdminState(messageText);
+                        setAdminStatus(messageText);
                         setView(messageUtils.generateSendMessageWithText(update, "Admin status given to user " + update.getMessage().getChat().getFirstName()));
 
                     }
@@ -195,9 +198,7 @@ public class CommandFilter {
     }
 
     private void addCoin(String[] messageText) {
-        Person person;
-        ProfileController profileController = new ProfileController(personRepository);
-        person = profileController.getUserById(Long.parseLong(messageText[1]));
+        Person person= profileController.getUserById(Long.parseLong(messageText[1]));
         int point = person.getNumberOfPoints();
         point += Integer.parseInt(messageText[2]);
         person.setNumberOfPoints(point);
@@ -217,18 +218,16 @@ public class CommandFilter {
     }
 
     private void createEvent(String[] messageText) {
-        List<Person> persons;
-        ProfileController profileController = new ProfileController(personRepository);
-        persons = profileController.getUsers();
-        List<String> chatsid = new ArrayList<>();
+        List<Person> persons=profileController.getUsers();
+        List<String> chatsId = new ArrayList<>();
         for (Person person : persons) {
             if (person.getId() < 0) {
-                chatsid.add(String.valueOf(person.getId()));
+                chatsId.add(String.valueOf(person.getId()));
             }
         }
         var sendMessage = messageUtils.generateSendMessageWithText(update,
                 String.format("Ivent: \nDescription: %s \nCoin: %s", messageText[1], messageText[2]));
-        for (String chatid : chatsid) {
+        for (String chatid : chatsId) {
             sendMessage.setChatId(chatid);
             setView(sendMessage);
         }
@@ -260,12 +259,9 @@ public class CommandFilter {
         }
     }
 
-    private void giveAdminState(String[] messageText) {
-        long id;
+    private void setAdminStatus(String[] messageText) {
         if (!messageText[1].isEmpty()) {
-            id = Long.parseLong(messageText[1]);
-
-            ProfileController profileController = new ProfileController(personRepository);
+           long id = Long.parseLong(messageText[1]);
             if (personRepository.findById(chatId).isPresent()) {
                 profileController.giveAdminStatus(id);
             }
@@ -273,11 +269,8 @@ public class CommandFilter {
     }
 
     private void pickUpAdminState(String[] messageText) {
-        long id;
         if (!messageText[1].isEmpty()) {
-            id = Long.parseLong(messageText[1]);
-
-            ProfileController profileController = new ProfileController(personRepository);
+            long id = Long.parseLong(messageText[1]);
             if (personRepository.findById(chatId).isPresent()) {
                 profileController.pickUpAdminStatus(id);
             }
@@ -285,11 +278,8 @@ public class CommandFilter {
     }
 
     private void deleteUserFromBd(String[] messageText) {
-        long id;
         if (!messageText[1].isEmpty()) {
-            id = Long.parseLong(messageText[1]);
-
-            ProfileController profileController = new ProfileController(personRepository);
+            long id = Long.parseLong(messageText[1]);
             if (personRepository.findById(chatId).isPresent()) {
                 profileController.deleteUserById(id);
             }
@@ -310,21 +300,18 @@ public class CommandFilter {
     }
 
     private String getUsers() {
-        List<Person> persons;
-        ProfileController profileController = new ProfileController(personRepository);
-        persons = profileController.getUsers();
-        String users = "";
+        List<Person> persons = profileController.getUsers();
+        StringBuilder users = new StringBuilder();
         for (Person person : persons) {
-            users += (person.getNickname() + "\n");
+            users.append(person.getNickname()).append("\n");
         }
-        return users;
+        return users.toString();
     }
 
 
     private void userVerification() {
-        Person person = new Person();
         if (personRepository.findById(chatId).isEmpty()) {
-            createPerson(person);
+            createPerson();
             setView(messageUtils.generateSendMessageWithText(update, "User has been registered"));
         }
     }
@@ -339,13 +326,11 @@ public class CommandFilter {
     }
 
     private Person getPersonData() {
-        Person person;
-        ProfileController profileController = new ProfileController(personRepository);
-        person = profileController.getUserById(chatId);
-        return person;
+        return profileController.getUserById(chatId);
     }
 
-    private void createPerson(Person person) {
+    private void createPerson() {
+        Person person = new Person();
         person.setId(chatId);
         person.setNickname(update.getMessage().getChat().getFirstName());
         person.setNumberOfPoints(0);
