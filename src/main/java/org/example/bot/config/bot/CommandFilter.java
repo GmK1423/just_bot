@@ -16,14 +16,19 @@ import java.util.List;
 @Component
 public class CommandFilter {
     private TelegramBot telegramBot;
-    private MessageUtils messageUtils;
+    private final MessageUtils messageUtils;
     private Update update;
     private Long chatId;
     private final PersonRepository personRepository;
 
-    private static final String HELP_TEXT = "Welcome to our game chat bot, created to maintain a cooperative spirit and organize a routine workflow.\n\n" +
-            "You can execute from the main menu on the left or by typing a command:\n\n" +
-            "Type /start to see a main menu but if you are not registered, the bot will offer to register\n\n";
+    private static final String HELP_TEXT = """
+            Welcome to our game chat bot, created to maintain a cooperative spirit and organize a routine workflow.
+
+            You can execute from the main menu on the left or by typing a command:
+
+            Type /start to see a main menu but if you are not registered, the bot will offer to register
+
+            """;
 
     public CommandFilter(MessageUtils messageUtils, PersonRepository personRepository) {
         this.messageUtils = messageUtils;
@@ -83,7 +88,7 @@ public class CommandFilter {
     }
 
     private void processTextMessage(Update update) {
-        commandsPrivate(update);
+        //commandsPrivate(update);
         log.debug(update.getMessage());
         if (update.getMessage().getChat().isUserChat()) {
             commandsPrivate(update);
@@ -98,21 +103,16 @@ public class CommandFilter {
     private void commandsGroup(Update update) {
         String[] messageText = updateToArray(update.getMessage().getText());
         switch (messageText[0]) {
-            case "/start":
-                startCommandReceive();
-                break;
-            case "/events_executed":
-                if (messageText[0] != messageText[1] && messageText[0] != messageText[2]) {
+            case "/start" -> startCommandReceive();
+            case "/events_executed" -> {
+                if (!messageText[0].equals(messageText[1]) && !messageText[0].equals(messageText[2])) {
                     executed(messageText, update);
                 }
-                if (messageText[0] == messageText[1] && messageText[0] == messageText[2]) {
+                if (messageText[0].equals(messageText[1]) && messageText[0].equals(messageText[2])) {
                     executedinformation(update);
                 }
-                break;
-
-            default:
-                setView(messageUtils.generateSendMessageWithText(update, "Enter any command"));
-
+            }
+            default -> setView(messageUtils.generateSendMessageWithText(update, "Enter any command"));
         }
     }
 
@@ -150,25 +150,27 @@ public class CommandFilter {
                 break;
 
             default:
-                setView(messageUtils.generateSendMessageWithText(update, "Enter any command"));
+                if (!getPersonData().isAdmin()) {
+                    setView(messageUtils.generateSendMessageWithText(update, "Enter any command"));
+                }
 
         }
 
         if (getPersonData().isAdmin()) {
             switch (messageText[0]) {
                 case "/events":
-                    if (messageText[0] != messageText[1] && messageText[0] != messageText[2]) {
+                    if (!messageText[0].equals(messageText[1]) && !messageText[0].equals(messageText[2])) {
                         createEvent(messageText);
                     }
-                    if (messageText[0] == messageText[1] && messageText[0] == messageText[2]) {
+                    if (messageText[0].equals(messageText[1]) && messageText[0].equals(messageText[2])) {
                         infirmationIvent(update);
                     }
                     break;
                 case "/addcoin":
-                    if (messageText[0] != messageText[1] && messageText[0] != messageText[2]) {
+                    if (!messageText[0].equals(messageText[1]) && !messageText[0].equals(messageText[2])) {
                         addCoin(messageText);
                     }
-                    if (messageText[0] == messageText[1] && messageText[0] == messageText[2]) {
+                    if (messageText[0].equals(messageText[1]) && messageText[0].equals(messageText[2])) {
                         addCoinInformation(update);
                     }
                     break;
@@ -179,15 +181,24 @@ public class CommandFilter {
 
                     }
                     break;
+                case "/delete_user":
+                    deleteUserFromBd(messageText);
+                    break;
+                case "/pickup_admin_status":
+                    if (getPersonData().getId() == BotConfig.moderid) {
+                        pickUpAdminState(messageText);
+                        setView(messageUtils.generateSendMessageWithText(update, "User has been deleted"));
+                    }
+                    break;
             }
         }
     }
 
     private void addCoin(String[] messageText) {
-        Person person = new Person();
+        Person person;
         ProfileController profileController = new ProfileController(personRepository);
         person = profileController.getUserById(Long.parseLong(messageText[1]));
-        Integer point = person.getNumberOfPoints();
+        int point = person.getNumberOfPoints();
         point += Integer.parseInt(messageText[2]);
         person.setNumberOfPoints(point);
         personRepository.save(person);
@@ -261,6 +272,30 @@ public class CommandFilter {
         }
     }
 
+    private void pickUpAdminState(String[] messageText) {
+        long id;
+        if (!messageText[1].isEmpty()) {
+            id = Long.parseLong(messageText[1]);
+
+            ProfileController profileController = new ProfileController(personRepository);
+            if (personRepository.findById(chatId).isPresent()) {
+                profileController.pickUpAdminStatus(id);
+            }
+        }
+    }
+
+    private void deleteUserFromBd(String[] messageText) {
+        long id;
+        if (!messageText[1].isEmpty()) {
+            id = Long.parseLong(messageText[1]);
+
+            ProfileController profileController = new ProfileController(personRepository);
+            if (personRepository.findById(chatId).isPresent()) {
+                profileController.deleteUserById(id);
+            }
+        }
+    }
+
     private void startCommandReceive() {
         userVerification();
         mainMenu();
@@ -290,30 +325,21 @@ public class CommandFilter {
         Person person = new Person();
         if (personRepository.findById(chatId).isEmpty()) {
             createPerson(person);
-            setView(messageUtils.generateSendMessageWithText(update, "User has been registered\n\n"));
-//            person = getPersonData();
-//            sendMessage("Your profile: \n\n" +
-//                    "1. Name is " + person.getNickname() + "\n\n" +
-//                    "2. Number of points is " + person.getNumberOfPoints() + "\n\n" +
-//                    "3. Your rang is " + person.getRang() + "\n\n");
+            setView(messageUtils.generateSendMessageWithText(update, "User has been registered"));
         }
-//        else {
-//            person = getPersonData();
-//            sendMessage("Your profile: \n\n" +
-//                    "1. Name is " + person.getNickname() + "\n\n" +
-//                    "2. Number of points is " + person.getNumberOfPoints() + "\n\n" +
-//                    "3. Your rang is " + person.getRang() + "\n\n");
-//        }
     }
 
     private void mainMenu() {
-        setView(messageUtils.generateSendMessageWithText(update, "Your profile: \n\n" +
-                "1. Profile (/profile)\n" +
-                "2. Users info (/users)\n"));
+        setView(messageUtils.generateSendMessageWithText(update, """
+                Your profile:\s
+
+                1. Profile (/profile)
+                2. Users info (/users)
+                """));
     }
 
     private Person getPersonData() {
-        Person person = new Person();
+        Person person;
         ProfileController profileController = new ProfileController(personRepository);
         person = profileController.getUserById(chatId);
         return person;

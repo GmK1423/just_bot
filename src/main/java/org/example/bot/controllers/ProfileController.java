@@ -64,4 +64,10 @@ public class ProfileController {
         person.setAdmin(true);
         personRepository.save(person);
     }
+
+    public void pickUpAdminStatus(@PathVariable Long id){
+        Person person = personRepository.findById(id).orElseThrow();
+        person.setAdmin(false);
+        personRepository.save(person);
+    }
 }
