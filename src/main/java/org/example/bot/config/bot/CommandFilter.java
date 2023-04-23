@@ -5,7 +5,6 @@ import org.example.bot.config.BotConfig;
 import org.example.bot.controllers.ProfileController;
 import org.example.bot.database.models.Person;
 import org.example.bot.database.repository.PersonRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -23,13 +22,36 @@ public class CommandFilter {
     private final PersonRepository personRepository;
     private final ProfileController profileController;
 
-    private static final String HELP_TEXT = """
+    private static final String HELP_START = """
             Welcome to our game chat bot, created to maintain a cooperative spirit and organize a routine workflow.
 
-            You can execute from the main menu on the left or by typing a command:
+            If you want to see all the commands write /help
 
             Type /start to see a main menu but if you are not registered, the bot will offer to register
 
+            """;
+    private static final String HELP_COMMAND_PRIVATE = """
+            The bot has the following commands.
+            
+            /start - Getting started with the bot.
+            /help - Get information about existing commands.
+            /profile - Get information about yourself.
+            /users - View all existing users.
+            
+            """;
+    private static final String HELP_COMMAND_ADMIN = """
+            The bot has the following commands.
+            
+            /start - Getting started with the bot.
+            /help - Get information about existing commands.
+            /profile - Get information about yourself.
+            /users - View all existing users.
+            /events - Start Event.
+            /addcoin - Add to user coin.
+            /giveAdminStatus - Give administrator rights to the user.
+            /deleteUser - Remove a user from the database.
+            /pickupAdminStatus - Take away the administrator rights
+            
             """;
 
     public CommandFilter(MessageUtils messageUtils, PersonRepository personRepository,ProfileController profileController) {
@@ -128,9 +150,13 @@ public class CommandFilter {
     private void executed(String[] messageText, Update update) {
         var sendMessage = messageUtils.generateSendMessageWithText(update,
                 String.format("Who: %s \nMessage: %s \nId person: %s", update.getMessage().getFrom().getFirstName(), messageText[2], update.getMessage().getFrom().getId()));
-        sendMessage.setChatId(BotConfig.moderid);
-        setView(sendMessage);
-
+        List<Person> persons = profileController.getUsers();
+        for (Person person : persons) {
+            if(person.isAdmin()){
+                sendMessage.setChatId(person.getId());
+                setView(sendMessage);
+            }
+        }
     }
 
     private void commandsPrivate(Update update) {
@@ -140,10 +166,11 @@ public class CommandFilter {
         String[] messageText = updateToArray(update.getMessage().getText());
         switch (messageText[0]) {
             case "/start":
+                setView(messageUtils.generateSendMessageWithText(update, HELP_START));
                 startCommandReceive();
                 break;
             case "/help":
-                setView(messageUtils.generateSendMessageWithText(update, HELP_TEXT));
+                setView(messageUtils.generateSendMessageWithText(update, HELP_COMMAND_PRIVATE));
                 break;
             case "/profile":
                 getProfile();
@@ -177,21 +204,25 @@ public class CommandFilter {
                         addCoinInformation(update);
                     }
                     break;
-                case "/give_admin_status":
+                case "/giveAdminStatus":
                     if (getPersonData().getId() == BotConfig.moderid) {
                         setAdminStatus(messageText);
                         setView(messageUtils.generateSendMessageWithText(update, "Admin status given to user " + update.getMessage().getChat().getFirstName()));
 
                     }
                     break;
-                case "/delete_user":
+                case "/deleteUser":
                     deleteUserFromBd(messageText);
                     break;
-                case "/pickup_admin_status":
+                case "/pickupAdminStatus":
                     if (getPersonData().getId() == BotConfig.moderid) {
                         pickUpAdminState(messageText);
                         setView(messageUtils.generateSendMessageWithText(update, "User has been deleted"));
                     }
+                    break;
+                case "/helpAdmin":
+                    setView(messageUtils.generateSendMessageWithText(update, HELP_COMMAND_ADMIN));
+                    startCommandReceive();
                     break;
             }
         }
@@ -213,7 +244,8 @@ public class CommandFilter {
 
     private void infirmationIvent(Update update) {
         var sendMessage = messageUtils.generateSendMessageWithText(update,
-                "If you want to start an event, first type the command /events, then a :, the event description, and after the : how many coenes will get for completing the event");
+                "If you want to start an event, first type the command /events, then a :, the event description, and after the : how many coenes will get for completing the event" +
+                        "\n This command sends alerts to all the chats in which the bot is a member. ");
         setView(sendMessage);
     }
 
