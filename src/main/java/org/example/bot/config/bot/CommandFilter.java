@@ -37,26 +37,22 @@ public class CommandFilter {
             """;
     private static final String HELP_COMMAND_PRIVATE = """
             The bot has the following commands.
-            
+                        
             /start - Getting started with the bot.
             /help - Get information about existing commands.
             /profile - Get information about yourself.
             /users - View all existing users.
-            
+                        
             """;
     private static final String HELP_COMMAND_ADMIN = """
             The bot has the following commands.
-            
-            /start - Getting started with the bot.
-            /help - Get information about existing commands.
-            /profile - Get information about yourself.
-            /users - View all existing users.
+                        
             /events - Start Event.
-            /addcoin - Add to user coin.
+            /addCoin - Add to user coin.
             /giveAdminStatus - Give administrator rights to the user.
             /deleteUser - Remove a user from the database.
             /pickupAdminStatus - Take away the administrator rights
-            
+                        
             """;
 
     public CommandFilter(MessageUtils messageUtils, PersonRepository personRepository, ProfileController profileController, Ranks ranks) {
@@ -157,7 +153,7 @@ public class CommandFilter {
                 String.format("Who: %s \nMessage: %s \nId person: %s", update.getMessage().getFrom().getFirstName(), messageText[2], update.getMessage().getFrom().getId()));
         List<Person> persons = profileController.getUsers();
         for (Person person : persons) {
-            if(person.isAdmin()){
+            if (person.isAdmin()) {
                 sendMessage.setChatId(person.getId());
                 setView(sendMessage);
             }
@@ -183,7 +179,7 @@ public class CommandFilter {
             case "/users":
                 setView(messageUtils.generateSendMessageWithText(update, getUsers()));
                 break;
-            case "/player_rating":
+            case "/playerRating":
                 setView(messageUtils.generateSendMessageWithText(update, getPlayerRating()));
                 break;
 
@@ -204,7 +200,7 @@ public class CommandFilter {
                         infirmationIvent(update);
                     }
                     break;
-                case "/addcoin":
+                case "/addCoin":
                     if (!messageText[0].equals(messageText[1]) && !messageText[0].equals(messageText[2])) {
                         addCoin(messageText);
                     }
@@ -264,9 +260,9 @@ public class CommandFilter {
         setView(sendMessage);
     }
 
-    private void resetBot(){
+    private void resetBot() {
         List<Person> persons = profileController.getUsers();
-        for(Person person:persons){
+        for (Person person : persons) {
             person.setNumberOfPoints(0);
             person.setRang("Peasant");
             personRepository.save(person);
@@ -319,7 +315,7 @@ public class CommandFilter {
     private String getPlayerRating() {
         int counter = 1;
         List<Person> persons = profileController.getUsers();
-        chekUser(persons);
+        checkUser(persons);
         Collections.sort(persons, new Comparator<Person>() {
             @Override
             public int compare(Person o1, Person o2) {
@@ -329,7 +325,7 @@ public class CommandFilter {
                 return o2.getNumberOfPoints() - o1.getNumberOfPoints();
             }
         });
-        StringBuilder users = new StringBuilder();
+        StringBuilder users = new StringBuilder("Players rating:\n\n");
         for (Person person : persons) {
             users.append(counter++).append(". ").append(person.getNickname()).append(" ").
                     append(person.getRang()).append(" ").
@@ -338,7 +334,7 @@ public class CommandFilter {
         return users.toString();
     }
 
-    private List<Person> chekUser(List<Person> persons) {
+    private List<Person> checkUser(List<Person> persons) {
         for (int i = 0; i < persons.size(); i++) {
             if (persons.get(i).getId() < 0) {
                 persons.remove(persons.get(i));
@@ -377,7 +373,6 @@ public class CommandFilter {
     private void startCommandReceive() {
         userVerification();
         mainMenu();
-
     }
 
     private void getProfile() {
@@ -389,8 +384,8 @@ public class CommandFilter {
 
     private String getUsers() {
         List<Person> persons = profileController.getUsers();
-        chekUser(persons);
-        StringBuilder users = new StringBuilder();
+        checkUser(persons);
+        StringBuilder users = new StringBuilder("All users:\n\n");
         for (Person person : persons) {
             users.append(person.getNickname()).append("\n");
         }
@@ -407,10 +402,11 @@ public class CommandFilter {
 
     private void mainMenu() {
         setView(messageUtils.generateSendMessageWithText(update, """
-                Your profile:\s
+                Main:\s
 
                 1. Profile (/profile)
                 2. Users info (/users)
+                3. Players rating (/playerRating)
                 """));
     }
 

@@ -45,14 +45,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.personRepository = personRepository;
         this.commandFilter = commandFilter;
 
-//        this.rang = rang;
-
         List<BotCommand> listOfCommand = new ArrayList<>();
         listOfCommand.add(new BotCommand("/start", "Start"));
         listOfCommand.add(new BotCommand("/help", "Info about bot"));
         listOfCommand.add(new BotCommand("/profile", "Get profile info"));
         listOfCommand.add(new BotCommand("/users", "Get users info"));
-        listOfCommand.add(new BotCommand("/events", "Start ivent"));
+        listOfCommand.add(new BotCommand("/playerRating", "Get users rating"));
         try {
             execute(new SetMyCommands(listOfCommand, new BotCommandScopeDefault(), null));
         } catch (TelegramApiException e) {
