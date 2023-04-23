@@ -5,11 +5,14 @@ import org.example.bot.config.BotConfig;
 import org.example.bot.controllers.ProfileController;
 import org.example.bot.database.models.Person;
 import org.example.bot.database.repository.PersonRepository;
+
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @Log4j
@@ -21,6 +24,7 @@ public class CommandFilter {
     private Long chatId;
     private final PersonRepository personRepository;
     private final ProfileController profileController;
+    private Ranks ranks;
 
     private static final String HELP_START = """
             Welcome to our game chat bot, created to maintain a cooperative spirit and organize a routine workflow.
@@ -54,10 +58,11 @@ public class CommandFilter {
             
             """;
 
-    public CommandFilter(MessageUtils messageUtils, PersonRepository personRepository,ProfileController profileController) {
+    public CommandFilter(MessageUtils messageUtils, PersonRepository personRepository, ProfileController profileController, Ranks ranks) {
         this.messageUtils = messageUtils;
         this.personRepository = personRepository;
         this.profileController = profileController;
+        this.ranks = ranks;
     }
 
     public void registerBot(TelegramBot telegramBot) {
@@ -113,7 +118,6 @@ public class CommandFilter {
     }
 
     private void processTextMessage(Update update) {
-        //commandsPrivate(update);
         log.debug(update.getMessage());
         if (update.getMessage().getChat().isUserChat()) {
             commandsPrivate(update);
@@ -178,6 +182,9 @@ public class CommandFilter {
             case "/users":
                 setView(messageUtils.generateSendMessageWithText(update, getUsers()));
                 break;
+            case "/player_rating":
+                setView(messageUtils.generateSendMessageWithText(update, getPlayerRating()));
+                break;
 
             default:
                 if (!getPersonData().isAdmin()) {
@@ -220,19 +227,26 @@ public class CommandFilter {
                         setView(messageUtils.generateSendMessageWithText(update, "User has been deleted"));
                     }
                     break;
+
                 case "/helpAdmin":
                     setView(messageUtils.generateSendMessageWithText(update, HELP_COMMAND_ADMIN));
                     startCommandReceive();
+
+                case "/resetBot":
+                    if (getPersonData().getId() == BotConfig.moderid) {
+                        resetBot();
+                    }
                     break;
             }
         }
     }
 
     private void addCoin(String[] messageText) {
-        Person person= profileController.getUserById(Long.parseLong(messageText[1]));
+        Person person = profileController.getUserById(Long.parseLong(messageText[1]));
         int point = person.getNumberOfPoints();
         point += Integer.parseInt(messageText[2]);
         person.setNumberOfPoints(point);
+        person.setRang(ranks.getPersonStatus(point));
         personRepository.save(person);
     }
 
@@ -249,8 +263,18 @@ public class CommandFilter {
         setView(sendMessage);
     }
 
+    private void resetBot(){
+        List<Person> persons = profileController.getUsers();
+        for(Person person:persons){
+            person.setNumberOfPoints(0);
+            person.setRang("");
+            personRepository.save(person);
+        }
+
+    }
+
     private void createEvent(String[] messageText) {
-        List<Person> persons=profileController.getUsers();
+        List<Person> persons = profileController.getUsers();
         List<String> chatsId = new ArrayList<>();
         for (Person person : persons) {
             if (person.getId() < 0) {
@@ -291,9 +315,40 @@ public class CommandFilter {
         }
     }
 
+    private String getPlayerRating() {
+        int counter = 1;
+        List<Person> persons = profileController.getUsers();
+        chekUser(persons);
+        Collections.sort(persons, new Comparator<Person>() {
+            @Override
+            public int compare(Person o1, Person o2) {
+                if (o1.getNumberOfPoints() != o2.getNumberOfPoints()) {
+                    return o2.getNumberOfPoints() - o1.getNumberOfPoints();
+                }
+                return o2.getNumberOfPoints() - o1.getNumberOfPoints();
+            }
+        });
+        StringBuilder users = new StringBuilder();
+        for (Person person : persons) {
+            users.append(counter++).append(". ").append(person.getNickname()).append(" ").
+                    append(person.getRang()).append(" ").
+                    append(person.getNumberOfPoints()).append("\n");
+        }
+        return users.toString();
+    }
+
+    private List<Person> chekUser(List<Person> persons) {
+        for (int i = 0; i < persons.size(); i++) {
+            if (persons.get(i).getId() < 0) {
+                persons.remove(persons.get(i));
+            }
+        }
+        return persons;
+    }
+
     private void setAdminStatus(String[] messageText) {
         if (!messageText[1].isEmpty()) {
-           long id = Long.parseLong(messageText[1]);
+            long id = Long.parseLong(messageText[1]);
             if (personRepository.findById(chatId).isPresent()) {
                 profileController.giveAdminStatus(id);
             }
@@ -333,6 +388,7 @@ public class CommandFilter {
 
     private String getUsers() {
         List<Person> persons = profileController.getUsers();
+        chekUser(persons);
         StringBuilder users = new StringBuilder();
         for (Person person : persons) {
             users.append(person.getNickname()).append("\n");
