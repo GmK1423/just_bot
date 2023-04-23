@@ -6,7 +6,7 @@ import org.example.bot.controllers.ProfileController;
 import org.example.bot.database.models.Person;
 import org.example.bot.database.repository.PersonRepository;
 
-import org.example.bot.game.Ranks.Ranks;
+import org.example.bot.config.bot.Ranks.Ranks;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -57,7 +57,6 @@ public class CommandFilter {
             /giveAdminStatus - Give administrator rights to the user.
             /deleteUser - Remove a user from the database.
             /pickupAdminStatus - Take away the administrator rights
-
             /playerRatingGroup - Will send to all groups ranking, which will show which list of ranked according to the number of coins.
             /helpAdmin - If you are an administrator, use this command.
                         
@@ -219,7 +218,6 @@ public class CommandFilter {
                         infirmationIvent(update);
                     }
                     break;
-                case "/addСoin":
                 case "/addCoin":
                     if (!messageText[0].equals(messageText[1]) && !messageText[0].equals(messageText[2])) {
                         addCoin(messageText);
@@ -263,17 +261,12 @@ public class CommandFilter {
 
     private void playerRatingGroup() {
         List<Person> persons = profileController.getUsers();
-        List<String> chatsId = new ArrayList<>();
+        var sendMessage = messageUtils.generateSendMessageWithText(update, getPlayerRating());
         for (Person person : persons) {
             if (person.getId() < 0) {
-                chatsId.add(String.valueOf(person.getId()));
+                sendMessage.setChatId(person.getId());
+                setView(sendMessage);
             }
-        }
-        var sendMessage = messageUtils.generateSendMessageWithText(update, getPlayerRating()
-        );
-        for (String chatid : chatsId) {
-            sendMessage.setChatId(chatid);
-            setView(sendMessage);
         }
     }
 

@@ -1,16 +1,9 @@
 package org.example.bot.config.bot;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.log4j.Log4j;
 import org.example.bot.config.BotConfig;
-import org.example.bot.controllers.ProfileController;
-import org.example.bot.database.models.Person;
 import org.example.bot.database.repository.PersonRepository;
-import org.example.bot.game.Game;
-import org.example.bot.game.Ranks.Ranks;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;

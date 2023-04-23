@@ -1,7 +1,5 @@
-package org.example.bot.game.Ranks;
+package org.example.bot.config.bot.Ranks;
 
-import org.example.bot.database.models.Person;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -27,20 +25,5 @@ public class Ranks {
         }
     }
 
-//    public String getLevelBonus() {
-//        switch (personStatus) {
-//            case "Peasent":
-//                return "What are the bonuses? Go to work";
-//            case "Knight":
-//                return "";
-//            case "Herceg":
-//                return "";
-//            case "King":
-//                return "";
-//            case "God":
-//                return "";
-//            default:
-//                return "Who are you, soldier?";
-//        }
 }
 
