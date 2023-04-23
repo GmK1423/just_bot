@@ -37,16 +37,17 @@ public class CommandFilter {
             """;
     private static final String HELP_COMMAND_PRIVATE = """
             The bot has the following commands.
-            
+                        
             /start - Getting started with the bot.
             /help - Get information about existing commands.
             /profile - Get information about yourself.
             /users - View all existing users.
-            
+            /helpAdmin - If you are an administrator, use this command.
+                        
             """;
     private static final String HELP_COMMAND_ADMIN = """
             The bot has the following commands.
-            
+                        
             /start - Getting started with the bot.
             /help - Get information about existing commands.
             /profile - Get information about yourself.
@@ -56,7 +57,17 @@ public class CommandFilter {
             /giveAdminStatus - Give administrator rights to the user.
             /deleteUser - Remove a user from the database.
             /pickupAdminStatus - Take away the administrator rights
-            
+            /playerRatingGroup - Will send to all groups ranking, which will show which list of ranked according to the number of coins.
+            /helpAdmin - If you are an administrator, use this command.
+                        
+            """;
+    private static final String HELP_COMMAND_GROUP = """
+            The bot has the following commands.
+                        
+            /start - Getting started with the bot.
+            /events_executed - To report on the work done for the event.
+            /help - Outputs commands that can be used in a group.
+                        
             """;
 
     public CommandFilter(MessageUtils messageUtils, PersonRepository personRepository, ProfileController profileController, Ranks ranks) {
@@ -142,6 +153,9 @@ public class CommandFilter {
                     executedInformation(update);
                 }
             }
+            case "/help" -> {
+                setView(messageUtils.generateSendMessageWithText(update, HELP_COMMAND_GROUP));
+            }
             default -> setView(messageUtils.generateSendMessageWithText(update, "Enter any command"));
         }
     }
@@ -157,7 +171,7 @@ public class CommandFilter {
                 String.format("Who: %s \nMessage: %s \nId person: %s", update.getMessage().getFrom().getFirstName(), messageText[2], update.getMessage().getFrom().getId()));
         List<Person> persons = profileController.getUsers();
         for (Person person : persons) {
-            if(person.isAdmin()){
+            if (person.isAdmin()) {
                 sendMessage.setChatId(person.getId());
                 setView(sendMessage);
             }
@@ -183,7 +197,7 @@ public class CommandFilter {
             case "/users":
                 setView(messageUtils.generateSendMessageWithText(update, getUsers()));
                 break;
-            case "/player_rating":
+            case "/playerRating":
                 setView(messageUtils.generateSendMessageWithText(update, getPlayerRating()));
                 break;
 
@@ -204,7 +218,7 @@ public class CommandFilter {
                         infirmationIvent(update);
                     }
                     break;
-                case "/addcoin":
+                case "/addСoin":
                     if (!messageText[0].equals(messageText[1]) && !messageText[0].equals(messageText[2])) {
                         addCoin(messageText);
                     }
@@ -238,7 +252,26 @@ public class CommandFilter {
                         resetBot();
                     }
                     break;
+                case "/playerRatingGroup":
+                    playerRatingGroup();
+                    break;
             }
+        }
+    }
+
+    private void playerRatingGroup() {
+        List<Person> persons = profileController.getUsers();
+        List<String> chatsId = new ArrayList<>();
+        for (Person person : persons) {
+            if (person.getId() < 0) {
+                chatsId.add(String.valueOf(person.getId()));
+            }
+        }
+        var sendMessage = messageUtils.generateSendMessageWithText(update, getPlayerRating()
+        );
+        for (String chatid : chatsId) {
+            sendMessage.setChatId(chatid);
+            setView(sendMessage);
         }
     }
 
@@ -249,6 +282,15 @@ public class CommandFilter {
         person.setNumberOfPoints(point);
         person.setRang(ranks.getPersonStatus(point));
         personRepository.save(person);
+        var sendMessage = messageUtils.generateSendMessageWithText(update,
+                String.format("Who: %s  \nAssigned Coins n: %s", update.getMessage().getFrom().getFirstName(), messageText[2]));
+        List<Person> persons = profileController.getUsers();
+        for (Person personall : persons) {
+            if (person.isAdmin()) {
+                sendMessage.setChatId(person.getId());
+                setView(sendMessage);
+            }
+        }
     }
 
     private void addCoinInformation(Update update) {
@@ -264,9 +306,9 @@ public class CommandFilter {
         setView(sendMessage);
     }
 
-    private void resetBot(){
+    private void resetBot() {
         List<Person> persons = profileController.getUsers();
-        for(Person person:persons){
+        for (Person person : persons) {
             person.setNumberOfPoints(0);
             person.setRang("Peasant");
             personRepository.save(person);
