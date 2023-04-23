@@ -43,7 +43,7 @@ public class CommandFilter {
             /profile - Get information about yourself.
             /users - View all existing users.
             /helpAdmin - If you are an administrator, use this command.
-                        
+                       
             """;
     private static final String HELP_COMMAND_ADMIN = """
             The bot has the following commands.
@@ -53,10 +53,11 @@ public class CommandFilter {
             /profile - Get information about yourself.
             /users - View all existing users.
             /events - Start Event.
-            /addcoin - Add to user coin.
+            /addCoin - Add to user coin.
             /giveAdminStatus - Give administrator rights to the user.
             /deleteUser - Remove a user from the database.
             /pickupAdminStatus - Take away the administrator rights
+
             /playerRatingGroup - Will send to all groups ranking, which will show which list of ranked according to the number of coins.
             /helpAdmin - If you are an administrator, use this command.
                         
@@ -219,6 +220,7 @@ public class CommandFilter {
                     }
                     break;
                 case "/addСoin":
+                case "/addCoin":
                     if (!messageText[0].equals(messageText[1]) && !messageText[0].equals(messageText[2])) {
                         addCoin(messageText);
                     }
@@ -361,7 +363,7 @@ public class CommandFilter {
     private String getPlayerRating() {
         int counter = 1;
         List<Person> persons = profileController.getUsers();
-        chekUser(persons);
+        checkUser(persons);
         Collections.sort(persons, new Comparator<Person>() {
             @Override
             public int compare(Person o1, Person o2) {
@@ -371,7 +373,7 @@ public class CommandFilter {
                 return o2.getNumberOfPoints() - o1.getNumberOfPoints();
             }
         });
-        StringBuilder users = new StringBuilder();
+        StringBuilder users = new StringBuilder("Players rating:\n\n");
         for (Person person : persons) {
             users.append(counter++).append(". ").append(person.getNickname()).append(" ").
                     append(person.getRang()).append(" ").
@@ -380,7 +382,7 @@ public class CommandFilter {
         return users.toString();
     }
 
-    private List<Person> chekUser(List<Person> persons) {
+    private List<Person> checkUser(List<Person> persons) {
         for (int i = 0; i < persons.size(); i++) {
             if (persons.get(i).getId() < 0) {
                 persons.remove(persons.get(i));
@@ -419,7 +421,6 @@ public class CommandFilter {
     private void startCommandReceive() {
         userVerification();
         mainMenu();
-
     }
 
     private void getProfile() {
@@ -431,8 +432,8 @@ public class CommandFilter {
 
     private String getUsers() {
         List<Person> persons = profileController.getUsers();
-        chekUser(persons);
-        StringBuilder users = new StringBuilder();
+        checkUser(persons);
+        StringBuilder users = new StringBuilder("All users:\n\n");
         for (Person person : persons) {
             users.append(person.getNickname()).append("\n");
         }
@@ -449,10 +450,11 @@ public class CommandFilter {
 
     private void mainMenu() {
         setView(messageUtils.generateSendMessageWithText(update, """
-                Your profile:\s
+                Main:\s
 
                 1. Profile (/profile)
                 2. Users info (/users)
+                3. Players rating (/playerRating)
                 """));
     }
 
