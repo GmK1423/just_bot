@@ -10,6 +10,7 @@ import org.example.bot.database.repository.PersonRepository;
 import org.example.bot.game.Game;
 import org.example.bot.game.Ranks.Ranks;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
@@ -28,6 +29,7 @@ import java.util.List;
 public class TelegramBot extends TelegramLongPollingBot {
 
     private CommandFilter commandFilter;
+
     private final BotConfig config;
     private final PersonRepository personRepository;
     //    private final Ranks rang;
