@@ -6,6 +6,7 @@ import org.example.bot.controllers.ProfileController;
 import org.example.bot.database.models.Person;
 import org.example.bot.database.repository.PersonRepository;
 
+import org.example.bot.game.Ranks.Ranks;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -24,7 +25,7 @@ public class CommandFilter {
     private Long chatId;
     private final PersonRepository personRepository;
     private final ProfileController profileController;
-    private Ranks ranks;
+    private final Ranks ranks;
 
     private static final String HELP_START = """
             Welcome to our game chat bot, created to maintain a cooperative spirit and organize a routine workflow.
@@ -267,7 +268,7 @@ public class CommandFilter {
         List<Person> persons = profileController.getUsers();
         for(Person person:persons){
             person.setNumberOfPoints(0);
-            person.setRang("");
+            person.setRang("Peasant");
             personRepository.save(person);
         }
 
