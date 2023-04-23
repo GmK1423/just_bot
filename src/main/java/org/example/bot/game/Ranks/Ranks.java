@@ -1,26 +1,13 @@
 package org.example.bot.game.Ranks;
 
 import org.example.bot.database.models.Person;
-import org.example.bot.game.Persons.StartPerson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+@Component
 public class Ranks {
-    private int progress;
-    private String personStatus;
-    private String levelBonus;
 
-
-    public Ranks() {
-
-//        this.progress = person.getNumberOfPoints();
-        this.personStatus = getPersonStatus();
-        this.levelBonus = getLevelBonus();
-//        System.out.println(personStatus);
-    }
-
-
-    private String getPersonStatus() {
+    public String getPersonStatus(int progress) {
         if ((progress >= 0) && (progress <= 1000)) {
             if (progress < 150) {
                 return PersonStatus.PEASANT.toString();
@@ -36,26 +23,24 @@ public class Ranks {
                 return PersonStatus.GOD.toString();
             }
         } else {
-            return "ErrorStatus";
+            return PersonStatus.PEASANT.toString();
         }
     }
 
-    public String getLevelBonus() {
-        switch (personStatus) {
-            case "Peasent":
-                return "What are the bonuses? Go to work";
-            case "Knight":
-                return "";
-            case "Herceg":
-                return "";
-            case "King":
-                return "";
-            case "God":
-                return "";
-            default:
-                return "Who are you, soldier?";
-        }
-    }
-
-
+//    public String getLevelBonus() {
+//        switch (personStatus) {
+//            case "Peasent":
+//                return "What are the bonuses? Go to work";
+//            case "Knight":
+//                return "";
+//            case "Herceg":
+//                return "";
+//            case "King":
+//                return "";
+//            case "God":
+//                return "";
+//            default:
+//                return "Who are you, soldier?";
+//        }
 }
+
