@@ -1,7 +1,7 @@
 package org.example.bot.config.bot;
 
 import lombok.extern.log4j.Log4j;
-import org.example.bot.config.BotConfig;
+import org.example.bot.config.Config;
 import org.example.bot.database.repository.PersonRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +23,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private CommandFilter commandFilter;
 
-    private final BotConfig config;
+    private final Config config;
     private final PersonRepository personRepository;
     //    private final Ranks rang;
     private Update update;
@@ -33,7 +33,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             "Type /start to see a main menu but if you are not registered, the bot will offer to register\n\n";
 
     @Autowired
-    public TelegramBot(BotConfig config, PersonRepository personRepository, CommandFilter commandFilter) {
+    public TelegramBot(Config config, PersonRepository personRepository, CommandFilter commandFilter) {
         this.config = config;
         this.personRepository = personRepository;
         this.commandFilter = commandFilter;

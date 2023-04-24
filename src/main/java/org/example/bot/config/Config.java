@@ -6,13 +6,13 @@ import org.springframework.context.annotation.PropertySource;
 
 @Configuration
 @PropertySource("application.properties")
-public class BotConfig {
+public class Config {
     @Value("${bot.name}")
     String botName;
     @Value("${bot.key}")
     String token;
-
-    public static final long moderid = 619465925;
+    @Value("${moderator.id}")
+    long getModerid;
 
     public String getBotName() {
         return botName;
@@ -23,6 +23,6 @@ public class BotConfig {
     }
 
     public long getModerid() {
-        return moderid;
+        return getModerid;
     }
 }

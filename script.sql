@@ -9,5 +9,3 @@ create table person
 
 alter table person
     owner to postgres;
-
-

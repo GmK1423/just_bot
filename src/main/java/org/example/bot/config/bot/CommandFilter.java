@@ -1,7 +1,7 @@
 package org.example.bot.config.bot;
 
 import lombok.extern.log4j.Log4j;
-import org.example.bot.config.BotConfig;
+import org.example.bot.config.Config;
 import org.example.bot.controllers.ProfileController;
 import org.example.bot.database.models.Person;
 import org.example.bot.database.repository.PersonRepository;
@@ -26,6 +26,7 @@ public class CommandFilter {
     private final PersonRepository personRepository;
     private final ProfileController profileController;
     private final Ranks ranks;
+    private Config config;
 
     private static final String HELP_START = """
             Welcome to our game chat bot, created to maintain a cooperative spirit and organize a routine workflow.
@@ -70,11 +71,12 @@ public class CommandFilter {
                         
             """;
 
-    public CommandFilter(MessageUtils messageUtils, PersonRepository personRepository, ProfileController profileController, Ranks ranks) {
+    public CommandFilter(MessageUtils messageUtils, PersonRepository personRepository, ProfileController profileController, Ranks ranks, Config config) {
         this.messageUtils = messageUtils;
         this.personRepository = personRepository;
         this.profileController = profileController;
         this.ranks = ranks;
+        this.config = config;
     }
 
     public void registerBot(TelegramBot telegramBot) {
@@ -227,7 +229,7 @@ public class CommandFilter {
                     }
                     break;
                 case "/giveAdminStatus":
-                    if (getPersonData().getId() == BotConfig.moderid) {
+                    if (getPersonData().getId() == config.getModerid()) {
                         setAdminStatus(messageText);
                         setView(messageUtils.generateSendMessageWithText(update, "Admin status given to user " + update.getMessage().getChat().getFirstName()));
 
@@ -237,7 +239,7 @@ public class CommandFilter {
                     deleteUserFromBd(messageText);
                     break;
                 case "/pickupAdminStatus":
-                    if (getPersonData().getId() == BotConfig.moderid) {
+                    if (getPersonData().getId() == config.getModerid()) {
                         pickUpAdminState(messageText);
                         setView(messageUtils.generateSendMessageWithText(update, "User has been deleted"));
                     }
@@ -248,7 +250,7 @@ public class CommandFilter {
                     startCommandReceive();
 
                 case "/resetBot":
-                    if (getPersonData().getId() == BotConfig.moderid) {
+                    if (getPersonData().getId() == config.getModerid()) {
                         resetBot();
                     }
                     break;
